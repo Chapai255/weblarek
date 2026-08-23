@@ -125,5 +125,5 @@ async function loadProductsFromServer() {
     }
 }
 
-// Запускаем асинхронную функцию
+// Запускаем функцию
 loadProductsFromServer();
