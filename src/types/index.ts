@@ -15,7 +15,7 @@ export interface IProduct {
     price: number | null;  // цена товара (null, если цена не указана)
 }
 
-export type TPayment = 'card' | 'cash' | "";
+export type TPayment = 'card' | 'cash';
 
 export interface IBuyer {
     payment: TPayment | null;  // выбранный способ оплаты
@@ -24,6 +24,8 @@ export interface IBuyer {
     address: string;    // адрес доставки
 }
 
+export type TErrors = Partial<Record<keyof IBuyer, string>>;
+
 //Для работы с сервером
 export interface IProductsResponse {
     items: IProduct[];
@@ -31,11 +33,7 @@ export interface IProductsResponse {
 }
 
 // Данные для отправки заказа
-export interface IOrderRequest {
-    payment: TPayment;
-    email: string;
-    phone: string;
-    address: string;
+export interface IOrderRequest extends IBuyer {
     total: number;
     items: string[];
 }

@@ -48,7 +48,9 @@ if (firstProduct) {
     }
 }
 
+
 //Проверяем методы общей стоимости и общего кол-ва товаров
+console.log(`Товары в корзине:`, cart.getItems().map(item=>item.title));
 console.log(`Количество товаров в корзине: ${cart.getItemCount()}`);
 console.log(`Общая стоимость: ${cart.getTotalPrice()} руб.`);
 
@@ -66,11 +68,14 @@ if (allProducts.length > 1) {
 if (firstProduct) {
     cart.removeItem(firstProduct.id);
     console.log(`После удаления товара с ID "${firstProduct.id}": ${cart.getItemCount()} товаров`);
+    console.log(`Товары в корзине:`, cart.getItems().map(item=>item.title));
 }
+
 
 // Очищаем корзину
 cart.clearCart();
 console.log(`Корзина очищена. Текущее количество: ${cart.getItemCount()}`);
+console.log(`Товары в корзине:`, cart.getItems().map(item=>item.title));
 
 
 //Тестирование Buyer

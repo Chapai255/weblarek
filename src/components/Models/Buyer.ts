@@ -1,4 +1,4 @@
-import type { IBuyer, TPayment } from '../../types/index';
+import type { IBuyer, TPayment, TErrors } from '../../types/index';
 
 export class Buyer {
     private payment: TPayment | null = null;
@@ -57,4 +57,3 @@ export class Buyer {
     }
 }
 
-type TErrors = Partial<Record<keyof IBuyer, string>>;
