@@ -1,4 +1,5 @@
-import type { IBuyer, TPayment, TErrors } from '../../types/index';
+import type { IBuyer, TPayment, TErrors } from '../../types';
+import { IEvents } from "../base/Events";
 
 export class Buyer {
     private payment: TPayment | null = null;
@@ -6,19 +7,11 @@ export class Buyer {
     private phone: string = '';
     private address: string = '';
 
+    constructor(protected events: IEvents) {}
+
     setBuyerData(data: Partial<IBuyer>): void {
-        if ('payment' in data) {
-            this.payment = data.payment ?? null;
-        }
-        if ('email' in data) {
-            this.email = data.email ?? '';
-        }
-        if ('phone' in data) {
-            this.phone = data.phone ?? '';
-        }
-        if ('address' in data) {
-            this.address = data.address ?? '';
-        }
+        Object.assign(this, data);
+        this.events.emit("buyer:changed");
     }
 
     getBuyerData(): IBuyer {
@@ -35,6 +28,7 @@ export class Buyer {
         this.email = '';
         this.phone = '';
         this.address = '';
+        this.events.emit("buyer:changed");
     }
 
     validate(): TErrors {

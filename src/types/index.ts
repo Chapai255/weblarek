@@ -1,3 +1,7 @@
+import { categoryMap } from "../utils/constants";
+
+export type CategoryKey = keyof typeof categoryMap;
+
 export type ApiPostMethods = 'POST' | 'PUT' | 'DELETE';
 
 export interface IApi {
@@ -42,4 +46,77 @@ export interface IOrderRequest extends IBuyer {
 export interface IOrderResponse {
     id: string;
     total: number;
+}
+
+export interface IHeaderData {
+    counter: number;
+}
+
+export interface IGalleryData {
+    catalog: HTMLElement[];
+}
+
+export interface IModalData {
+    content: HTMLElement;
+}
+
+export interface ICardData {
+    title: string;
+    price: number | null;
+}
+
+export interface ICatalogCardData extends ICardData {
+    category: string;
+    image: string;
+}
+
+export interface ICardActions {
+    onClick?: (event: MouseEvent) => void;
+}
+
+export interface IPreviewCardData extends ICatalogCardData {
+    description: string;
+    buttonText: string;
+    buttonDisabled: boolean;
+}
+
+export interface IBasketCardData extends ICardData {
+    index: number;
+}
+
+export interface IBasketViewData {
+    items: HTMLElement[];
+    total: number;
+}
+
+export interface IFormState {
+    valid: boolean;
+    errors: string;
+}
+
+export interface IFormFieldChange<T> {
+    field: keyof T;
+    value: string;
+}
+
+export interface IOrderFormData {
+    payment: TPayment | null;
+    address: string;
+}
+
+export interface IContactsFormData {
+    email: string;
+    phone: string;
+}
+
+export interface ISuccessData {
+    total: number;
+}
+
+export interface ISuccessActions {
+    onClick?: (event: MouseEvent) => void;
+}
+
+export interface ICardEvent {
+    id: string;
 }
