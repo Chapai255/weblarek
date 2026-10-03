@@ -296,3 +296,353 @@ interface IBuyer {
 Использует типы и интерфейсы, описанные в файле `types/index.ts`.
 
 ---
+
+## Слой презентера (View)
+
+# Слой представления (View)
+
+Слой View отвечает за отображение данных на странице и за перехват действий пользователя. Классы View **не хранят бизнес-данные** и **не знают о моделях**. Они получают данные через метод `render()` базового класса `Component`, а на любое действие пользователя генерируют событие через брокер событий `IEvents`. Обработка событий выполняется в Презентере (`index.ts`).
+
+## Общие принципы
+
+- Каждый класс отвечает за свой блок разметки и получает корневой DOM-элемент в конструктор.
+- Все классы наследуются от базового `Component<T>`. Данные передаются в `render(data)`, который вызывает соответствующие сеттеры.
+- Карточки (`CatalogCard`, `PreviewCard`, `BasketCard`) имеют общего родителя `Card`.
+- Формы (`OrderForm`, `ContactsForm`) имеют общего родителя `Form`.
+- `Modal` не имеет дочерних классов и сам не наследуется. Содержимое модального окна (корзина, формы, карточка, окно успеха) — самостоятельные компоненты, которые передаются в `Modal` как готовый DOM-элемент.
+- Для кнопок и элементов, которые есть только у одного компонента, действие передаётся либо через событие (`events.emit`), либо через колбэк `actions.onClick`, заданный Презентером.
+
+## Иерархия классов
+
+```
+Component<T>
+├── Header
+├── Gallery
+├── Modal
+├── BasketView
+├── Success
+├── Card<T extends ICardData>
+│   ├── CatalogCard
+│   ├── PreviewCard
+│   └── BasketCard
+└── Form<T>
+    ├── OrderForm
+    └── ContactsForm
+```
+
+---
+
+## Базовый класс Component
+
+`Component<T>` (`components/base/Component.ts`) — базовый класс всех компонентов.
+
+| Член | Описание |
+|---|---|
+| `constructor(container: HTMLElement)` | Принимает корневой DOM-элемент компонента |
+| `container: HTMLElement` | Корневой элемент |
+| `render(data?: Partial<T>): HTMLElement` | Записывает переданные данные в сеттеры и возвращает корневой элемент |
+| `setImage(element: HTMLImageElement, src: string, alt?: string)` | Устанавливает изображение |
+
+---
+
+## Header
+
+Шапка страницы со счётчиком товаров в корзине и кнопкой открытия корзины.
+
+**Разметка:** `.header`
+
+**Конструктор:** `constructor(events: IEvents, container: HTMLElement)`
+
+**Поля:**
+- `events: IEvents` — брокер событий
+- `counterElement: HTMLElement` — счётчик товаров (`.header__basket-counter`)
+- `basketButton: HTMLButtonElement` — кнопка корзины (`.header__basket`)
+
+**Сеттеры:**
+- `counter: number` — выводит количество товаров в корзине
+
+**События:**
+- `basket:open` — клик по кнопке корзины
+
+**Данные для `render`:** `IHeaderData { counter: number }`
+
+---
+
+## Gallery
+
+Контейнер каталога товаров на главной странице.
+
+**Разметка:** `.gallery`
+
+**Конструктор:** `constructor(container: HTMLElement)`
+
+**Поля:**
+- `catalogElement: HTMLElement` — контейнер для карточек (совпадает с корневым элементом)
+
+**Сеттеры:**
+- `catalog: HTMLElement[]` — заменяет содержимое галереи переданными карточками
+
+**События:** не генерирует.
+
+**Данные для `render`:** `IGalleryData { catalog: HTMLElement[] }`
+
+---
+
+## Modal
+
+Универсальное модальное окно. Не имеет наследников. Отображает любой переданный DOM-элемент.
+
+**Разметка:** `#modal-container`
+
+**Конструктор:** `constructor(events: IEvents, container: HTMLElement)`
+
+**Поля:**
+- `events: IEvents`
+- `contentElement: HTMLElement` — контейнер содержимого (`.modal__content`)
+- `closeButton: HTMLButtonElement` — кнопка закрытия (`.modal__close`)
+
+**Сеттеры:**
+- `content: HTMLElement` — заменяет содержимое окна
+
+**Методы:**
+- `open(): void` — показывает окно (класс `modal_active`), генерирует `modal:open`
+- `close(): void` — скрывает окно, очищает содержимое, генерирует `modal:close`
+
+**Пользовательские действия:**
+- клик по кнопке закрытия — закрывает окно
+- клик по подложке (вне содержимого) — закрывает окно
+
+**События:**
+- `modal:open` — окно открыто
+- `modal:close` — окно закрыто
+
+**Данные для `render`:** `IModalData { content: HTMLElement }`
+
+---
+
+## Card
+
+Абстрактный родительский класс для всех карточек. Содержит общий функционал: название и цену.
+
+**Конструктор:** `protected constructor(container: HTMLElement)`
+
+**Поля:**
+- `titleElement: HTMLElement` — название (`.card__title`)
+- `priceElement: HTMLElement` — цена (`.card__price`)
+
+**Сеттеры:**
+- `title: string` — выводит название товара
+- `price: number | null` — выводит цену в формате «N синапсов», для `null` выводит «Бесценно»
+
+**Данные для `render`:** `ICardData { title: string; price: number | null }`
+
+### CatalogCard
+
+Карточка товара в каталоге на главной странице.
+
+**Разметка:** шаблон `#card-catalog`
+
+**Конструктор:** `constructor(container: HTMLElement, actions?: ICardActions)`
+
+**Поля:**
+- `imageElement: HTMLImageElement` — изображение (`.card__image`)
+- `categoryElement: HTMLElement` — категория (`.card__category`)
+
+**Сеттеры:**
+- `category: string` — выводит название категории и подставляет соответствующий CSS-класс из `categoryMap`
+- `image: string` — устанавливает изображение
+
+**Пользовательские действия:**
+- клик по карточке — вызывается `actions.onClick`, Презентер генерирует событие `card:select` с `{ id }`
+
+**Данные для `render`:** `ICatalogCardData` (`title`, `price`, `category`, `image`)
+
+### PreviewCard
+
+Подробная карточка товара, отображается в модальном окне.
+
+**Разметка:** шаблон `#card-preview`
+
+**Конструктор:** `constructor(events: IEvents, container: HTMLElement)`
+
+**Поля:**
+- `events: IEvents`
+- `imageElement: HTMLImageElement` — изображение (`.card__image`)
+- `categoryElement: HTMLElement` — категория (`.card__category`)
+- `descriptionElement: HTMLElement` — описание (`.card__text`)
+- `actionButton: HTMLButtonElement` — кнопка действия (`.card__button`)
+
+**Сеттеры:**
+- `image: string` — изображение
+- `category: string` — категория и её CSS-класс
+- `description: string` — описание товара
+- `buttonText: string` — текст кнопки («В корзину», «Удалить из корзины», «Недоступно»)
+- `buttonDisabled: boolean` — блокировка кнопки (для товаров без цены)
+
+**События:**
+- `card:action` — клик по кнопке «В корзину» / «Удалить из корзины»
+
+**Данные для `render`:** `IPreviewCardData` (`title`, `price`, `category`, `image`, `description`, `buttonText`, `buttonDisabled`)
+
+### BasketCard
+
+Карточка товара в корзине.
+
+**Разметка:** шаблон `#card-basket`
+
+**Конструктор:** `constructor(container: HTMLElement, actions?: ICardActions)`
+
+**Поля:**
+- `indexElement: HTMLElement` — порядковый номер (`.basket__item-index`)
+- `deleteButton: HTMLButtonElement` — кнопка удаления (`.basket__item-delete`)
+
+**Сеттеры:**
+- `index: number` — порядковый номер товара в корзине
+
+**Пользовательские действия:**
+- клик по кнопке удаления — вызывается `actions.onClick`, Презентер генерирует событие `basket:delete` с `{ id }`
+
+**Данные для `render`:** `IBasketCardData` (`index`, `title`, `price`)
+
+---
+
+## BasketView
+
+Корзина: список товаров, итоговая стоимость, кнопка оформления заказа. Отображается в модальном окне.
+
+**Разметка:** шаблон `#basket`
+
+**Конструктор:** `constructor(events: IEvents, container: HTMLElement)`
+
+**Поля:**
+- `events: IEvents`
+- `listElement: HTMLElement` — список товаров (`.basket__list`)
+- `totalElement: HTMLElement` — итоговая сумма (`.basket__price`)
+- `orderButton: HTMLButtonElement` — кнопка «Оформить» (`.basket__button`)
+
+**Сеттеры:**
+- `items: HTMLElement[]` — заменяет список карточек; если список пуст, блокирует кнопку оформления
+- `total: number` — выводит итоговую сумму в формате «N синапсов»
+
+**События:**
+- `order:open` — клик по кнопке «Оформить»
+
+**Данные для `render`:** `IBasketViewData { items: HTMLElement[]; total: number }`
+
+---
+
+## Form
+
+Абстрактный родительский класс форм. Содержит общий функционал: кнопку отправки, вывод ошибок, перехват ввода и отправки.
+
+**Конструктор:** `constructor(events: IEvents, formContainer: HTMLFormElement)`
+
+**Поля:**
+- `events: IEvents`
+- `formContainer: HTMLFormElement` — элемент формы
+- `submitButton: HTMLButtonElement` — кнопка отправки (`button[type="submit"]`)
+- `errorsElement: HTMLElement` — блок ошибок (`.form__errors`)
+
+**Сеттеры:**
+- `valid: boolean` — блокирует кнопку отправки, если форма невалидна
+- `errors: string` — выводит текст ошибок
+
+**Методы:**
+- `protected onInputChange(field: keyof T, value: string): void` — генерирует событие изменения поля
+
+**События** (имя формируется из атрибута `name` формы):
+- `<form.name>.<field>:change` с `{ field, value }` — изменение поля формы
+- `<form.name>:submit` — отправка формы
+
+**Данные для `render`:** `T & IFormState` (`valid: boolean`, `errors: string`)
+
+### OrderForm
+
+Форма выбора способа оплаты и адреса доставки (первый шаг оформления).
+
+**Разметка:** шаблон `#order` (`name="order"`)
+
+**Конструктор:** `constructor(events: IEvents, container: HTMLFormElement)`
+
+**Поля:**
+- `paymentButtons: HTMLButtonElement[]` — кнопки способа оплаты (`card`, `cash`)
+- `addressInput: HTMLInputElement` — поле адреса (`input[name="address"]`)
+
+**Сеттеры:**
+- `payment: TPayment | null` — подсвечивает выбранный способ оплаты
+- `address: string` — значение поля адреса
+
+**События:**
+- `order.payment:change` с `{ field, value }` — выбран способ оплаты
+- `order.address:change` с `{ field, value }` — изменён адрес
+- `order:submit` — нажата кнопка «Далее»
+
+**Данные для `render`:** `IOrderFormData` (`payment`, `address`) + `IFormState`
+
+### ContactsForm
+
+Форма с контактными данными покупателя (второй шаг оформления).
+
+**Разметка:** шаблон `#contacts` (`name="contacts"`)
+
+**Конструктор:** `constructor(events: IEvents, container: HTMLFormElement)`
+
+**Поля:**
+- `emailInput: HTMLInputElement` — поле email (`input[name="email"]`)
+- `phoneInput: HTMLInputElement` — поле телефона (`input[name="phone"]`)
+
+**Сеттеры:**
+- `email: string` — значение поля email
+- `phone: string` — значение поля телефона
+
+**События:**
+- `contacts.email:change` с `{ field, value }` — изменён email
+- `contacts.phone:change` с `{ field, value }` — изменён телефон
+- `contacts:submit` — нажата кнопка «Оплатить»
+
+**Данные для `render`:** `IContactsFormData` (`email`, `phone`) + `IFormState`
+
+---
+
+## Success
+
+Окно успешного оформления заказа. Отображается в модальном окне.
+
+**Разметка:** шаблон `#success`
+
+**Конструктор:** `constructor(container: HTMLElement, actions?: ISuccessActions)`
+
+**Поля:**
+- `descriptionElement: HTMLElement` — текст о списанной сумме (`.order-success__description`)
+- `closeButton: HTMLButtonElement` — кнопка закрытия (`.order-success__close`)
+
+**Сеттеры:**
+- `total: number` — выводит «Списано N синапсов»
+
+**Пользовательские действия:**
+- клик по кнопке закрытия — вызывается `actions.onClick`, Презентер генерирует событие `success:close`
+
+**Данные для `render`:** `ISuccessData { total: number }`
+
+---
+
+## Сводная таблица событий
+
+| Событие | Источник | Данные | Назначение |
+|---|---|---|---|
+| `basket:open` | `Header` | — | Открыть корзину |
+| `card:select` | `CatalogCard` (через колбэк Презентера) | `{ id }` | Выбрать карточку для просмотра |
+| `card:action` | `PreviewCard` | — | Добавить товар в корзину или удалить из неё |
+| `basket:delete` | `BasketCard` (через колбэк Презентера) | `{ id }` | Удалить товар из корзины |
+| `order:open` | `BasketView` | — | Открыть форму заказа |
+| `order.payment:change` | `OrderForm` | `{ field, value }` | Изменён способ оплаты |
+| `order.address:change` | `OrderForm` | `{ field, value }` | Изменён адрес |
+| `order:submit` | `OrderForm` | — | Перейти к форме контактов |
+| `contacts.email:change` | `ContactsForm` | `{ field, value }` | Изменён email |
+| `contacts.phone:change` | `ContactsForm` | `{ field, value }` | Изменён телефон |
+| `contacts:submit` | `ContactsForm` | — | Отправить заказ |
+| `success:close` | `Success` (через колбэк Презентера) | — | Закрыть окно успеха |
+| `modal:open` | `Modal` | — | Окно открыто |
+| `modal:close` | `Modal` | — | Окно закрыто |
+
+---
