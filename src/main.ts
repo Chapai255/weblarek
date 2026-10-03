@@ -344,10 +344,6 @@ events.on("contacts:submit", () => {
         });
 });
 
-//Закрытие модалки
-events.on("modal:close", () => {
-    modal.close();
-});
 
 //Обнуление интерфейса
 cart.clearCart();
