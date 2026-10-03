@@ -43,7 +43,7 @@ export interface IOrderRequest extends IBuyer {
 }
 
 // Ответ сервера после отправки заказа
-export interface IOrderResponse {
+export interface IOrderResult {
     id: string;
     total: number;
 }

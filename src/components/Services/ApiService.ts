@@ -1,5 +1,5 @@
-import { IApi } from '../../types/index';
-import { IProductsResponse, IOrderRequest, IOrderResponse } from '../../types/index';
+import {IApi} from '../../types';
+import { IProductsResponse, IOrderRequest, IOrderResult } from '../../types';
 
 export class ApiService {
     private api: IApi;
@@ -12,7 +12,7 @@ export class ApiService {
         return this.api.get<IProductsResponse>('/product/');
     }
 
-    sendOrder(orderData: IOrderRequest): Promise<IOrderResponse> {
-        return this.api.post<IOrderResponse>('/order/', orderData);
+    postOrder(orderData: IOrderRequest): Promise<IOrderResult> {
+        return this.api.post<IOrderResult>('/order/', orderData);
     }
 }
