@@ -24,15 +24,20 @@ export class BasketView extends Component<IBasketViewData> {
             ".basket__button",
             this.container,
         );
+
+        this.orderButton.disabled = true;
+
         this.orderButton.addEventListener("click", () => {
             this.events.emit("order:open");
         });
     }
     set items(items: HTMLElement[]) {
         this.listElement.replaceChildren(...items);
-        this.orderButton.disabled = items.length === 0;
     }
     set total(value: number) {
         this.totalElement.textContent = `${value} синапсов`;
+    }
+    set buttonDisabled(value: boolean) {
+        this.orderButton.disabled = value;
     }
 }

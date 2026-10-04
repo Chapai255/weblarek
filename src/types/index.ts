@@ -87,6 +87,7 @@ export interface IBasketCardData extends ICardData {
 export interface IBasketViewData {
     items: HTMLElement[];
     total: number;
+    buttonDisabled: boolean;
 }
 
 export interface IFormState {

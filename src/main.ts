@@ -117,6 +117,7 @@ const onBasketChanged = (): void => {
     basketView.render({
         items,
         total: cart.getTotalPrice(),
+        buttonDisabled: items.length === 0,
     });
 
     header.render({
@@ -344,10 +345,6 @@ events.on("contacts:submit", () => {
         });
 });
 
-
-//Обнуление интерфейса
-cart.clearCart();
-buyer.clearBuyerData()
 
 //Получение остатка товаров
 apiService
